@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
+[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class MeshGenerator : MonoBehaviour
 {
     [SerializeField, Header("Diagnostics: (do not modify)")]
@@ -14,8 +14,8 @@ public class MeshGenerator : MonoBehaviour
 
     private Mesh _customMesh;
 
-    private readonly Vector3 right_dir = Vector3.right;
-    private readonly Vector3 forward_dir = Vector3.forward;
+    public static readonly Vector3 right_dir = Vector3.right;
+    public static readonly Vector3 forward_dir = Vector3.forward;
 
     private const float BLOCK_WIDTH = 1f;
     private const float BLOCK_HEIGHT = 5f;
@@ -45,7 +45,7 @@ public class MeshGenerator : MonoBehaviour
 
     private void Start()
     {
-        SpawnBlocks(PULL_BLOCK_LENGTH);
+        //SpawnBlocks(PULL_BLOCK_LENGTH);
 
         _spawnRoutine = StartCoroutine(SpawnBlocksRouine());
         StartCoroutine(DestroyBlockRoutine());
@@ -75,11 +75,11 @@ public class MeshGenerator : MonoBehaviour
         _customMesh.RecalculateNormals();
 
         GetComponent<MeshFilter>().mesh = _customMesh;
-
+        GetComponent<MeshCollider>().sharedMesh = _customMesh;
         //GetComponent<MeshFilter>().mesh = _customMesh;
     }
 
-    private void SpawnBlocks(int length)
+    public void SpawnBlocks(int length)
     {
         Vector3 lastPosition;
         if (_blocks.Count == 0)
