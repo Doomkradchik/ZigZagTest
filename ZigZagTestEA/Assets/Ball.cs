@@ -8,7 +8,7 @@ public class Ball : MonoBehaviour
     private LayerMask _mask;
 
     private Vector3 _direction;
-    private readonly Vector3 _startDirection = MeshGenerator.forward_dir;
+    private readonly Vector3 _startDirection = PathMeshGenerator.forward_dir;
 
     private const float RAY_DISTANCE = 2f;
     public event Action Died;
@@ -32,22 +32,29 @@ public class Ball : MonoBehaviour
 
     private void Update()
     {
-        DetectFalling();
+        DetectPath();
     }
 
     private void ChangeDirection()
     {
-        _direction = _direction == MeshGenerator.forward_dir 
-            ? MeshGenerator.right_dir : MeshGenerator.forward_dir;
+        _direction = _direction == PathMeshGenerator.forward_dir 
+            ? PathMeshGenerator.right_dir : PathMeshGenerator.forward_dir;
     }
 
-    private void DetectFalling()
+    private void DetectPath()
     { 
         var ray = new Ray(transform.position, -Vector3.up);
         if(Physics.Raycast(ray, out RaycastHit hit, RAY_DISTANCE, _mask) == false)
         {
+            
             Died?.Invoke();
-           // enabled = false;
+            // enabled = false;
+            return;
+        }
+
+        if(hit.collider.TryGetComponent(out PathMeshGenerator pathMeshGenerator))
+        {
+            pathMeshGenerator.TryGenerateNextBlocks(hit.point);
         }
     }
 }

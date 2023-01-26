@@ -27,7 +27,7 @@ public abstract class Simulation<T> : MonoBehaviour
     protected virtual void OnStoped(T placedEntity) { }
 }
 
-public sealed class TilesSimulationCompositeRoot : Simulation<GameObject>
+public sealed class TilesSimulationRoot : Simulation<GameObject>
 {
     [SerializeField, Min(0.2f)]
     private float _fallSpeed = 1f;
@@ -35,7 +35,7 @@ public sealed class TilesSimulationCompositeRoot : Simulation<GameObject>
     [SerializeField, Min(1f)]
     private float _lifeTime = 2f;
 
-    public static TilesSimulationCompositeRoot Instance;
+    public static TilesSimulationRoot Instance;
 
     private void Start()
     {

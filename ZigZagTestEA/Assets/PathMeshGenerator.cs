@@ -1,13 +1,12 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-public class MeshGenerator : MonoBehaviour
+public class PathMeshGenerator : MonoBehaviour
 {
     [SerializeField, Header("Diagnostics: (do not modify)")]
-    private int _blocksCount;
+    private int _blocksCount = 0;
 
     private List<Vector3> _vertices = new List<Vector3>();
     private List<int> _triangles = new List<int>();
@@ -21,34 +20,44 @@ public class MeshGenerator : MonoBehaviour
     private const float BLOCK_HEIGHT = 5f;
     private const int PULL_BLOCK_LENGTH = 20;
 
-    private readonly float _durationDeltaSpawn = 3f;
-    private float _durationDeltaDestroy = 1f;
-    private Coroutine _spawnRoutine;
+    private readonly int _startCount = 10;
+
     private List<Block> _blocks = new List<Block>();
+
+    private Material _pathMaterial;
 
     private Vector3 getDirectionOffset
     {
         get
         {
             // TO DO
+            if(_blocksCount < _startCount)
+            {
+                return right_dir;
+            }    
 
-            
+
             return Random.value < 0.5f ? right_dir : forward_dir;
         }
     }
 
-    public struct Block
+
+    public struct Block 
     {
         public Vector3 direction;
         public Vector3 position;
     }
 
+
+    private void Awake()
+    {
+        _pathMaterial = GetComponent<MeshRenderer>().material;
+        _blocksCount = 0;
+    }
+
     private void Start()
     {
-        //SpawnBlocks(PULL_BLOCK_LENGTH);
-
-        _spawnRoutine = StartCoroutine(SpawnBlocksRouine());
-        StartCoroutine(DestroyBlockRoutine());
+        SpawnBlocks(PULL_BLOCK_LENGTH);
     }
 
     private void OnDestroy()
@@ -76,7 +85,6 @@ public class MeshGenerator : MonoBehaviour
 
         GetComponent<MeshFilter>().mesh = _customMesh;
         GetComponent<MeshCollider>().sharedMesh = _customMesh;
-        //GetComponent<MeshFilter>().mesh = _customMesh;
     }
 
     public void SpawnBlocks(int length)
@@ -91,19 +99,17 @@ public class MeshGenerator : MonoBehaviour
         {
             var dir = getDirectionOffset;
             _blocks.Add(new Block { position = lastPosition, direction = dir});
+            _blocksCount = _blocks.Count;
             lastPosition += dir * BLOCK_WIDTH;
         }
-
-        _blocksCount = _blocks.Count;
 
         RegenerateMesh();
     }
 
-    private void DestroyLastBlockFromBeginning()
+    public void DestroyLastBlockFromBeginning()
     {
         if (_blocks.Count == 0) { return; }
 
-        //var tileMesh = tile.AddComponent<MeshFilter>().mesh;
         var tileMesh = new Mesh();
 
         var vertices = new List<Vector3>();
@@ -124,31 +130,45 @@ public class MeshGenerator : MonoBehaviour
 
         GameObject tile = new GameObject();
         tile.transform.position = _blocks[0].position + transform.position;
-        tile.AddComponent<MeshRenderer>();
         tile.AddComponent<MeshFilter>().mesh = tileMesh;
+        tile.AddComponent<MeshRenderer>().material = _pathMaterial;
 
-        TilesSimulationCompositeRoot.Instance.Simulate(tile);
+        TilesSimulationRoot.Instance.Simulate(tile);
 
         _blocks.RemoveAt(0);
 
         RegenerateMesh();
     }
 
-    private IEnumerator SpawnBlocksRouine()
+    public bool TryGetBlockIndexByPointHit(Vector3 point, out int index)
     {
-        while (true)
+        index = 0;
+        if (_blocks == null || _blocks.Count == 0)
+            return false;
+
+        float min_distance = (_blocks[0].position.ToXZPlane() - point.ToXZPlane()).magnitude;
+
+        for (int i = 1; i < _blocks.Count; i++)
         {
-            yield return new WaitForSeconds(_durationDeltaSpawn);
-            SpawnBlocks(PULL_BLOCK_LENGTH);
+            var distance = (_blocks[i].position.ToXZPlane() - point.ToXZPlane()).magnitude;
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                index = i;
+            }
         }
+
+        return true;
     }
 
-    private IEnumerator DestroyBlockRoutine()
+    public void TryGenerateNextBlocks(Vector3 point)
     {
-        while (true)
+        if(TryGetBlockIndexByPointHit(point, out int index))
         {
-            yield return new WaitForSeconds(_durationDeltaDestroy);
-            DestroyLastBlockFromBeginning();
+            if(index + PULL_BLOCK_LENGTH * 0.3 >= _blocks.Count)
+            {
+                SpawnBlocks(PULL_BLOCK_LENGTH);
+            }
         }
     }
 
@@ -297,4 +317,13 @@ public class MeshGenerator : MonoBehaviour
         triangles.Add(verticesCount - 1);
     }
 
+}
+
+
+public static class Vector3Extension
+{
+    public static Vector3 ToXZPlane(this Vector3 vector)
+    {
+        return new Vector3(vector.x, 0f, vector.z);
+    }
 }
