@@ -1,25 +1,29 @@
 using UnityEngine;
 
-public class CameraController : MonoBehaviour
+public class CameraController : MonoBehaviour, IPauseHandler
 {
     private readonly Vector3 _direction = new Vector3(1f, 0, 1f);
-    private Ball _ball;
     private PhysicsMovement _movement;
     private Transform p_transform;
 
-    private const float RATIO = 0.60f;
-    private float CalculateSpeed
+    private const float OFFSET = 17f;
+
+    private bool _stopped = false;
+    private Vector3 CalculatePosition
     {
         get
         {
-            return _movement.Speed * Mathf.Cos(Mathf.Deg2Rad * 45f)* RATIO;
+            var length = _movement.transform.position.ToXZPlane().magnitude 
+                * Mathf.Cos(Vector3.Angle(_movement.transform.position.ToXZPlane(), _direction) * Mathf.Deg2Rad);
+
+            return (length - OFFSET) * _direction.normalized;
         }
     }
 
     private void Awake()
     {
-        _ball = FindObjectOfType<Ball>();
-        _movement = _ball.GetComponent<PhysicsMovement>();
+        _movement = FindObjectOfType<PhysicsMovement>();
+        GameProgressScaleController.Subscribe(this);
         p_transform = transform.parent;
     }
     private void Start()
@@ -28,6 +32,11 @@ public class CameraController : MonoBehaviour
     }
     private void LateUpdate()
     {
-        p_transform.position += CalculateSpeed * new Vector3(1f, 0, 1f) * Time.deltaTime;
+        if(_stopped == false)
+        p_transform.position = new Vector3(CalculatePosition.x, p_transform.position.y, CalculatePosition.z);
     }
+
+    public void Pause() => _stopped = true;
+
+    public void Unpause() => _stopped = false;
 }

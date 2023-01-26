@@ -7,6 +7,9 @@ using System;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class PathMeshGenerator : MonoBehaviour
 {
+    [SerializeField]
+    private GameObject _startPlatform;
+
     [SerializeField, Header("Diagnostics: (do not modify)")]
     private int _blocksCount = 0;
 
@@ -22,7 +25,7 @@ public class PathMeshGenerator : MonoBehaviour
 
     public const float BLOCK_WIDTH = 1f;
     public const float BLOCK_HEIGHT = 5f;
-    private const int PULL_BLOCK_LENGTH = 35;
+    private const int PULL_BLOCK_LENGTH = 40;
 
     public readonly List<Block> _blocks = new List<Block>();
 
@@ -131,7 +134,7 @@ public class PathMeshGenerator : MonoBehaviour
         tile.AddComponent<MeshFilter>().mesh = tileMesh;
         tile.AddComponent<MeshRenderer>().material = _pathMaterial;
 
-        TilesSimulationRoot.Instance.Simulate(tile);
+        TilesSimulationRoot.Instance.Simulate(new Entity() {_prefab = tile, _speed = TileConfig._speed });
 
         _blocks.RemoveAt(0);
 
@@ -144,11 +147,11 @@ public class PathMeshGenerator : MonoBehaviour
         if (_blocks == null || _blocks.Count == 0)
             return false;
 
-        float min_distance = (_blocks[0].position.ToXZPlane() - point.ToXZPlane()).magnitude;
+        float min_distance = GetDistanceToBlock(0, point);
 
         for (int i = 1; i < _blocks.Count; i++)
         {
-            var distance = (_blocks[i].position.ToXZPlane() - point.ToXZPlane()).magnitude;
+            var distance = GetDistanceToBlock(i, point);
             if (distance < min_distance)
             {
                 min_distance = distance;
@@ -159,13 +162,28 @@ public class PathMeshGenerator : MonoBehaviour
         return true;
     }
 
-    public void TryGenerateNextBlocks(Vector3 point)
+    private float GetDistanceToBlock(int index, Vector3 point)
+        => (transform.position + _blocks[index].position.ToXZPlane() - point.ToXZPlane()).magnitude;
+
+    public void OnBlockDetected(Vector3 point)
     {
         if(TryGetBlockIndexByPointHit(point, out int index))
         {
-            if(index + PULL_BLOCK_LENGTH * 0.5 >= _blocks.Count)
+            if(index == 1)
+            {
+                TilesSimulationRoot.Instance.Simulate(
+                    new Entity() {_prefab = _startPlatform, _speed = TileConfig._mainTileSpeed });
+            }
+
+            if(index + PULL_BLOCK_LENGTH >= _blocks.Count)
             {
                 SpawnBlocks(PULL_BLOCK_LENGTH);
+            }
+
+            if (index > 3)
+            {
+                DestroyLastBlockFromBeginning();
+                Debug.Log(index);
             }
         }
     }

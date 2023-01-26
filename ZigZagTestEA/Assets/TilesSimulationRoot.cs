@@ -27,7 +27,14 @@ public abstract class Simulation<T> : MonoBehaviour
     protected virtual void OnStoped(T placedEntity) { }
 }
 
-public sealed class TilesSimulationRoot : Simulation<GameObject>
+[SerializeField]
+public class Entity
+{
+    public GameObject _prefab;
+    public float _speed;
+}
+
+public sealed class TilesSimulationRoot : Simulation<Entity>
 {
     [SerializeField, Min(0.2f)]
     private float _fallSpeed = 1f;
@@ -45,27 +52,39 @@ public sealed class TilesSimulationRoot : Simulation<GameObject>
         Instance = this;
     }
 
-    public override void Simulate(GameObject placedEntity)
+    public override void Simulate(Entity placedEntity)
     {
         base.Simulate(placedEntity);
         _timers.Start(placedEntity, _lifeTime, Stop);
     }
 
-    private readonly Timers<GameObject> _timers = new Timers<GameObject>();
+    private readonly Timers<Entity> _timers = new Timers<Entity>();
 
     private void Update()
     {
         foreach(var tile in _entities)
         {
-            tile.transform.position += -_fallSpeed * Vector3.up * Time.deltaTime;
+            if(tile._prefab == null)
+            {
+                _entities.Remove(tile);
+                return;
+            }
+
+            tile._prefab.transform.position += -tile._speed * Vector3.up * Time.deltaTime;
         }
 
         _timers.Tick(Time.deltaTime);
     }
 
-    protected override void OnStoped(GameObject placedEntity)
+    protected override void OnStoped(Entity placedEntity)
     {
-        Destroy(placedEntity);
+        Destroy(placedEntity._prefab);
     }
 
+}
+
+public static class TileConfig
+{
+    public static float _mainTileSpeed = 0.5f;
+    public static float _speed = 5f;
 }

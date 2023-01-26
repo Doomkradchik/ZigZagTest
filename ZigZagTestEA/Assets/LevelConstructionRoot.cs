@@ -1,14 +1,9 @@
-using System.Collections;
+
 using UnityEngine;
 using Random = UnityEngine.Random;
-using System.Linq;
-using System.Collections.Generic;
 
 public class LevelConstructionRoot : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject _startPlatform;
-
     [Header("Diamonds Pool")]
     [SerializeField]
     private Diamond _prefab;
@@ -20,23 +15,12 @@ public class LevelConstructionRoot : MonoBehaviour
     [SerializeField]
     private bool _expandable;
 
-    private const float START_DELTA = 5f;
-    private const float DELTA = 1f;
+    private const float DELTA = 0.93f;
 
     private readonly float _diamondChance = 0.23f;
 
     private PoolMono<Diamond> _diamondsPool;
 
-    private float DurationDeltaDestroy
-    {
-        get
-        {
-            if (_movement == null)
-                _movement = FindObjectOfType<PhysicsMovement>();
-
-            return DELTA / _movement.Speed;
-        }
-    }
     private PathMeshGenerator _path;
     private PhysicsMovement _movement;
 
@@ -49,7 +33,7 @@ public class LevelConstructionRoot : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(DestroyingBlocksRoutine());
+      //  StartCoroutine(DestroyingBlocksRoutine());
         _path.pathPieceGenerated += SpawnDiamonds;
     }
 
@@ -57,19 +41,6 @@ public class LevelConstructionRoot : MonoBehaviour
     {
         _path.pathPieceGenerated -= SpawnDiamonds;
         StopAllCoroutines();
-    }
-
-    private IEnumerator DestroyingBlocksRoutine()
-    {
-        yield return new WaitForSeconds(START_DELTA);
-        TilesSimulationRoot.Instance.Simulate(_startPlatform);
-
-
-        while (true)
-        {
-            yield return new WaitForSeconds(DurationDeltaDestroy);
-            _path.DestroyLastBlockFromBeginning();
-        }
     }
 
     public void SpawnDiamonds(int startIndex)

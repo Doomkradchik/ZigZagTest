@@ -2,7 +2,7 @@ using UnityEngine;
 using System;
 
 [RequireComponent(typeof(Rigidbody), typeof(PhysicsMovement), typeof(SurfaceSlider))]
-public class Ball : MonoBehaviour
+public class Ball : MonoBehaviour, IPauseHandler
 {
     [SerializeField]
     private LayerMask _mask;
@@ -16,15 +16,27 @@ public class Ball : MonoBehaviour
 
     private InputRouter _router;
     private IMovement _physicsMovement;
+
+    private bool _entered = false;
+    private bool _died = false;
+
+    private float _sphereRadius;
+
     private void Awake()
     {
         _physicsMovement = GetComponent<PhysicsMovement>();
         _router = new InputRouter(ChangeDirection);
         _direction = _startDirection;
+
+        _sphereRadius = GetComponent<SphereCollider>().radius;
+
+        GameProgressScaleController.Subscribe(this);
     }
 
     private void OnEnable() => _router.OnEnable();
     private void OnDisable() => _router.OnDisable();
+
+    
 
     private void FixedUpdate()
     {
@@ -33,29 +45,54 @@ public class Ball : MonoBehaviour
 
     private void Update()
     {
-        DetectPath();
+        if(_died == false)
+             DetectPath();
+    }
+
+    public void Pause()
+    {
+        _router.OnDisable();
+    }
+
+    public void Unpause()
+    {
+        _router.OnEnable();
     }
 
     private void ChangeDirection()
     {
-        _direction = _direction == PathMeshGenerator.left_dir 
+        _direction = _direction == PathMeshGenerator.left_dir
             ? PathMeshGenerator.right_dir : PathMeshGenerator.left_dir;
     }
 
     private void DetectPath()
-    { 
-        var ray = new Ray(transform.position, -Vector3.up);
-        if(Physics.Raycast(ray, out RaycastHit hit, RAY_DISTANCE, _mask) == false)
-        {
-            
-            Died?.Invoke();
-            // enabled = false;
-            return;
-        }
+    {
+        var direction = -Vector3.up;
+        var cast = Physics.Raycast(transform.position, direction, out RaycastHit hit, RAY_DISTANCE, _mask);
 
-        if(hit.collider.TryGetComponent(out PathMeshGenerator pathMeshGenerator))
+        if (cast == false  && _entered)
         {
-            pathMeshGenerator.TryGenerateNextBlocks(hit.point);
+            if(Physics.OverlapSphere(transform.position + direction * PathMeshGenerator.BLOCK_HEIGHT * 0.5f, _sphereRadius).Length == 0)
+            {
+                Died?.Invoke();
+                _died = true;
+                GameProgressScaleController.Pause();
+                return;
+            }
+        }
+        
+
+        if(hit.collider != null)
+        {
+            _entered = true;
+
+            if(hit.collider.TryGetComponent(out PathMeshGenerator pathMeshGenerator))
+            {
+                pathMeshGenerator.OnBlockDetected(hit.point);
+            }
         }
     }
+
+   
+
 }
