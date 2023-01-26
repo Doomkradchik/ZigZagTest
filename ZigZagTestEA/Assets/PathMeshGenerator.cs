@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using System.Linq;
+using System;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class PathMeshGenerator : MonoBehaviour
@@ -8,37 +10,34 @@ public class PathMeshGenerator : MonoBehaviour
     [SerializeField, Header("Diagnostics: (do not modify)")]
     private int _blocksCount = 0;
 
+    public IEnumerable<Vector3> BlockPositions => _blocks.Select(b => b.position);
+
     private List<Vector3> _vertices = new List<Vector3>();
     private List<int> _triangles = new List<int>();
 
     private Mesh _customMesh;
 
     public static readonly Vector3 right_dir = Vector3.right;
-    public static readonly Vector3 forward_dir = Vector3.forward;
+    public static readonly Vector3 left_dir = Vector3.forward;
 
-    private const float BLOCK_WIDTH = 1f;
-    private const float BLOCK_HEIGHT = 5f;
-    private const int PULL_BLOCK_LENGTH = 20;
+    public const float BLOCK_WIDTH = 1f;
+    public const float BLOCK_HEIGHT = 5f;
+    private const int PULL_BLOCK_LENGTH = 35;
 
-    private readonly int _startCount = 10;
-
-    private List<Block> _blocks = new List<Block>();
+    public readonly List<Block> _blocks = new List<Block>();
 
     private Material _pathMaterial;
 
-    private Vector3 getDirectionOffset
+    public event Action<int> pathPieceGenerated;
+    private Camera _camera;
+
+    private Vector3 GetDirectionOffset(Vector3 position)
     {
-        get
-        {
-            // TO DO
-            if(_blocksCount < _startCount)
-            {
-                return right_dir;
-            }    
+        var screenPos = _camera.WorldToViewportPoint(position);
+        if (screenPos.x < 0.15f) { return right_dir; }
+        if (screenPos.x > 0.85f) { return left_dir; }
 
-
-            return Random.value < 0.5f ? right_dir : forward_dir;
-        }
+        return Random.value < 0.5f ? right_dir : left_dir;
     }
 
 
@@ -51,6 +50,7 @@ public class PathMeshGenerator : MonoBehaviour
 
     private void Awake()
     {
+        _camera = Camera.main;
         _pathMaterial = GetComponent<MeshRenderer>().material;
         _blocksCount = 0;
     }
@@ -58,11 +58,6 @@ public class PathMeshGenerator : MonoBehaviour
     private void Start()
     {
         SpawnBlocks(PULL_BLOCK_LENGTH);
-    }
-
-    private void OnDestroy()
-    {
-        StopAllCoroutines();
     }
 
     private void RegenerateMesh()
@@ -87,9 +82,11 @@ public class PathMeshGenerator : MonoBehaviour
         GetComponent<MeshCollider>().sharedMesh = _customMesh;
     }
 
+
     public void SpawnBlocks(int length)
     {
         Vector3 lastPosition;
+        int startPoint = _blocks.Count;
         if (_blocks.Count == 0)
             lastPosition = Vector3.zero;
         else
@@ -97,12 +94,13 @@ public class PathMeshGenerator : MonoBehaviour
 
         for (int i = 0; i < length; i++)
         {
-            var dir = getDirectionOffset;
+            var dir = GetDirectionOffset(lastPosition);
             _blocks.Add(new Block { position = lastPosition, direction = dir});
             _blocksCount = _blocks.Count;
             lastPosition += dir * BLOCK_WIDTH;
         }
 
+        pathPieceGenerated?.Invoke(startPoint);
         RegenerateMesh();
     }
 
@@ -165,7 +163,7 @@ public class PathMeshGenerator : MonoBehaviour
     {
         if(TryGetBlockIndexByPointHit(point, out int index))
         {
-            if(index + PULL_BLOCK_LENGTH * 0.3 >= _blocks.Count)
+            if(index + PULL_BLOCK_LENGTH * 0.5 >= _blocks.Count)
             {
                 SpawnBlocks(PULL_BLOCK_LENGTH);
             }
@@ -177,7 +175,7 @@ public class PathMeshGenerator : MonoBehaviour
         var blockPos = block.position;
         if(TryGetBlockAt(index - 1, out Block previous))
         {
-            if (previous.direction != forward_dir)
+            if (previous.direction != left_dir)
                 GenerateBackSideBlock(_triangles, _vertices, blockPos);
 
             if (previous.direction != right_dir)
@@ -194,7 +192,7 @@ public class PathMeshGenerator : MonoBehaviour
             if (block.direction != right_dir)
                 GenerateRightSideBlock(_triangles, _vertices, blockPos);
 
-            if (block.direction != forward_dir)
+            if (block.direction != left_dir)
                 GenerateFrontSideBlock(_triangles, _vertices, blockPos);
         }
         else

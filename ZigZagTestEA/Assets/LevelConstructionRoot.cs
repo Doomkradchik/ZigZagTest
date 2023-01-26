@@ -1,13 +1,31 @@
 using System.Collections;
 using UnityEngine;
+using Random = UnityEngine.Random;
+using System.Linq;
+using System.Collections.Generic;
 
 public class LevelConstructionRoot : MonoBehaviour
 {
     [SerializeField]
     private GameObject _startPlatform;
 
-    private const float START_DELTA = 4f;
+    [Header("Diamonds Pool")]
+    [SerializeField]
+    private Diamond _prefab;
+    [SerializeField]
+    private int _count;
+    [SerializeField]
+    private Transform _root;
+
+    [SerializeField]
+    private bool _expandable;
+
+    private const float START_DELTA = 5f;
     private const float DELTA = 1f;
+
+    private readonly float _diamondChance = 0.23f;
+
+    private PoolMono<Diamond> _diamondsPool;
 
     private float DurationDeltaDestroy
     {
@@ -25,11 +43,20 @@ public class LevelConstructionRoot : MonoBehaviour
     private void Awake()
     {
         _path = FindObjectOfType<PathMeshGenerator>();
+        _diamondsPool = new PoolMono<Diamond>(_prefab, _count, _root);
+        _diamondsPool.AutoExpand = _expandable;
     }
 
     private void Start()
     {
         StartCoroutine(DestroyingBlocksRoutine());
+        _path.pathPieceGenerated += SpawnDiamonds;
+    }
+
+    private void OnDestroy()
+    {
+        _path.pathPieceGenerated -= SpawnDiamonds;
+        StopAllCoroutines();
     }
 
     private IEnumerator DestroyingBlocksRoutine()
@@ -44,4 +71,19 @@ public class LevelConstructionRoot : MonoBehaviour
             _path.DestroyLastBlockFromBeginning();
         }
     }
+
+    public void SpawnDiamonds(int startIndex)
+    {
+        for (int i = startIndex; i < _path._blocks.Count; i++)
+        {
+            if (Random.value < _diamondChance)
+            {
+                _diamondsPool.FreeElement.transform.position =
+                    _path._blocks[i].position +
+                    Vector3.up * PathMeshGenerator.BLOCK_HEIGHT * 0.5f
+                    + _path.gameObject.transform.position;
+            }
+        }
+    }
+
 }

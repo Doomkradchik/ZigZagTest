@@ -8,7 +8,8 @@ public class Ball : MonoBehaviour
     private LayerMask _mask;
 
     private Vector3 _direction;
-    private readonly Vector3 _startDirection = PathMeshGenerator.forward_dir;
+    public Vector3 Direction => _direction;
+    private readonly Vector3 _startDirection = PathMeshGenerator.left_dir;
 
     private const float RAY_DISTANCE = 2f;
     public event Action Died;
@@ -37,8 +38,8 @@ public class Ball : MonoBehaviour
 
     private void ChangeDirection()
     {
-        _direction = _direction == PathMeshGenerator.forward_dir 
-            ? PathMeshGenerator.right_dir : PathMeshGenerator.forward_dir;
+        _direction = _direction == PathMeshGenerator.left_dir 
+            ? PathMeshGenerator.right_dir : PathMeshGenerator.left_dir;
     }
 
     private void DetectPath()
