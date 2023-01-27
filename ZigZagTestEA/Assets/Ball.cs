@@ -19,13 +19,16 @@ public class Ball : MonoBehaviour, IPauseHandler
 
     private bool _entered = false;
     private bool _died = false;
-
     private float _sphereRadius;
+
+    private PauseMode _mode;
+    private bool _paused = false;
+
+    private int _score;
 
     private void Awake()
     {
         _physicsMovement = GetComponent<PhysicsMovement>();
-        _router = new InputRouter(ChangeDirection);
         _direction = _startDirection;
 
         _sphereRadius = GetComponent<SphereCollider>().radius;
@@ -33,10 +36,15 @@ public class Ball : MonoBehaviour, IPauseHandler
         GameProgressScaleController.Subscribe(this);
     }
 
-    private void OnEnable() => _router.OnEnable();
-    private void OnDisable() => _router.OnDisable();
+    private void OnEnable()
+    {
+        InputRouter.Instance.Touched += ChangeDirection;
+    }
+    private void OnDisable()
+    {
+        InputRouter.Instance.Touched -= ChangeDirection;
+    }
 
-    
 
     private void FixedUpdate()
     {
@@ -49,20 +57,38 @@ public class Ball : MonoBehaviour, IPauseHandler
              DetectPath();
     }
 
-    public void Pause()
+    public void Pause(PauseMode mode )
     {
-        _router.OnDisable();
+        if(mode == PauseMode.Start)
+        {
+            _mode = mode;
+            enabled = false;
+        }
+
+        _paused = true;
     }
 
     public void Unpause()
     {
-        _router.OnEnable();
+        if (_mode == PauseMode.Start)
+            OnInGameProcessStarted();
+
+        _paused = false;
+        enabled = true;
     }
+
+    protected virtual void OnInGameProcessStarted()
+    {
+        ScoreSystemRoot.Instance.CurrentScore = 0;
+    } 
 
     private void ChangeDirection()
     {
+        if (_paused) { return; }
+
         _direction = _direction == PathMeshGenerator.left_dir
             ? PathMeshGenerator.right_dir : PathMeshGenerator.left_dir;
+        ScoreSystemRoot.Instance.CurrentScore++;
     }
 
     private void DetectPath()
@@ -72,7 +98,7 @@ public class Ball : MonoBehaviour, IPauseHandler
 
         if (cast == false  && _entered)
         {
-            if(Physics.OverlapSphere(transform.position + direction * PathMeshGenerator.BLOCK_HEIGHT * 0.5f, _sphereRadius).Length == 0)
+            if(Physics.OverlapSphere(transform.position + direction * PathMeshGenerator.BLOCK_HEIGHT * 0.5f, _sphereRadius * 0.5f, _mask).Length == 0)
             {
                 Died?.Invoke();
                 _died = true;

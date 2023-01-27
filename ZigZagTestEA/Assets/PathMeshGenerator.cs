@@ -183,7 +183,6 @@ public class PathMeshGenerator : MonoBehaviour
             if (index > 3)
             {
                 DestroyLastBlockFromBeginning();
-                Debug.Log(index);
             }
         }
     }

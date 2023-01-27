@@ -7,8 +7,6 @@ public class CameraController : MonoBehaviour, IPauseHandler
     private Transform p_transform;
 
     private const float OFFSET = 17f;
-
-    private bool _stopped = false;
     private Vector3 CalculatePosition
     {
         get
@@ -16,7 +14,9 @@ public class CameraController : MonoBehaviour, IPauseHandler
             var length = _movement.transform.position.ToXZPlane().magnitude 
                 * Mathf.Cos(Vector3.Angle(_movement.transform.position.ToXZPlane(), _direction) * Mathf.Deg2Rad);
 
-            return (length - OFFSET) * _direction.normalized;
+            var position =  (length - OFFSET) * _direction.normalized;
+
+            return new Vector3(position.x, p_transform.position.y, position.z);
         }
     }
 
@@ -25,18 +25,20 @@ public class CameraController : MonoBehaviour, IPauseHandler
         _movement = FindObjectOfType<PhysicsMovement>();
         GameProgressScaleController.Subscribe(this);
         p_transform = transform.parent;
+
+        p_transform.position = CalculatePosition;
     }
+
     private void Start()
     {
         p_transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
     }
     private void LateUpdate()
     {
-        if(_stopped == false)
-        p_transform.position = new Vector3(CalculatePosition.x, p_transform.position.y, CalculatePosition.z);
+        p_transform.position = CalculatePosition;
     }
 
-    public void Pause() => _stopped = true;
+    public void Pause(PauseMode pauseMode) => enabled = false;
 
-    public void Unpause() => _stopped = false;
+    public void Unpause() => enabled = true;
 }

@@ -1,19 +1,20 @@
 using System;
+using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class InputRouter
+public class InputRouter : MonoBehaviour
 {
     private PlayerInputs _input;
 
-    public Action Touched { get; }
+    public event Action Touched;
 
-    public InputRouter(Action touched)
+    public static InputRouter Instance;
+    private void Awake()
     {
+        Instance = this;
         _input = new PlayerInputs();
-        Touched = touched;
     }
-
-    public void OnEnable()
+    private void OnEnable()
     {
         _input.Enable();
         _input.Player.Touch.performed += OnTouched;
@@ -24,7 +25,7 @@ public class InputRouter
         Touched?.Invoke();
     }
 
-    public void OnDisable()
+    private void OnDisable()
     {
         _input.Disable();
     }
