@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using Block = PathMeshGenerator.Block;
 
 [RequireComponent(typeof(Rigidbody), typeof(PhysicsMovement), typeof(SurfaceSlider))]
 public class Ball : MonoBehaviour, IPauseHandler
@@ -7,15 +8,15 @@ public class Ball : MonoBehaviour, IPauseHandler
     [SerializeField]
     private LayerMask _mask;
 
-    private Vector3 _direction;
+    protected Vector3 _direction;
     public Vector3 Direction => _direction;
     private readonly Vector3 _startDirection = PathMeshGenerator.left_dir;
 
     private const float RAY_DISTANCE = 2f;
     public event Action Died;
 
-    private InputRouter _router;
-    private IMovement _physicsMovement;
+    protected InputRouter _router;
+    protected IMovement _physicsMovement;
 
     private bool _entered = false;
     private bool _died = false;
@@ -25,6 +26,10 @@ public class Ball : MonoBehaviour, IPauseHandler
     private bool _paused = false;
 
     private int _score;
+
+    protected bool _blockDetected = false;
+    protected Block _block;
+
 
     private void Awake()
     {
@@ -51,7 +56,7 @@ public class Ball : MonoBehaviour, IPauseHandler
         _physicsMovement.Move(_direction);
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         if(_died == false)
              DetectPath();
@@ -82,7 +87,7 @@ public class Ball : MonoBehaviour, IPauseHandler
         ScoreSystemRoot.Instance.CurrentScore = 0;
     } 
 
-    private void ChangeDirection()
+    protected void ChangeDirection()
     {
         if (_paused) { return; }
 
@@ -114,7 +119,9 @@ public class Ball : MonoBehaviour, IPauseHandler
 
             if(hit.collider.TryGetComponent(out PathMeshGenerator pathMeshGenerator))
             {
-                pathMeshGenerator.OnBlockDetected(hit.point);
+                _blockDetected = pathMeshGenerator.OnBlockDetected(hit.point, out PathMeshGenerator.Block block);
+                if (_blockDetected)
+                    _block = block;
             }
         }
     }

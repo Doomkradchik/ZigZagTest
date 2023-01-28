@@ -11,6 +11,7 @@ public class InputRouter : MonoBehaviour
     public static InputRouter Instance;
     private void Awake()
     {
+        DontDestroyOnLoad(gameObject);
         Instance = this;
         _input = new PlayerInputs();
     }

@@ -165,26 +165,30 @@ public class PathMeshGenerator : MonoBehaviour
     private float GetDistanceToBlock(int index, Vector3 point)
         => (transform.position + _blocks[index].position.ToXZPlane() - point.ToXZPlane()).magnitude;
 
-    public void OnBlockDetected(Vector3 point)
+    public bool OnBlockDetected(Vector3 point, out Block block)
     {
-        if(TryGetBlockIndexByPointHit(point, out int index))
+        block = new Block();
+
+        if (TryGetBlockIndexByPointHit(point, out int index) == false) { return false; }
+
+        if (index == 1)
         {
-            if(index == 1)
-            {
-                TilesSimulationRoot.Instance.Simulate(
-                    new Entity() {_prefab = _startPlatform, _speed = TileConfig._mainTileSpeed });
-            }
-
-            if(index + PULL_BLOCK_LENGTH >= _blocks.Count)
-            {
-                SpawnBlocks(PULL_BLOCK_LENGTH);
-            }
-
-            if (index > 3)
-            {
-                DestroyLastBlockFromBeginning();
-            }
+            TilesSimulationRoot.Instance.Simulate(
+                new Entity() { _prefab = _startPlatform, _speed = TileConfig._mainTileSpeed });
         }
+
+        if (index + PULL_BLOCK_LENGTH >= _blocks.Count)
+        {
+            SpawnBlocks(PULL_BLOCK_LENGTH);
+        }
+
+        if (index > 3)
+        {
+            DestroyLastBlockFromBeginning();
+        }
+
+        block = _blocks[index];
+        return true;
     }
 
     private void GenerateBlock(Block block, int index)

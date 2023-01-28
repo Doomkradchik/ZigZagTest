@@ -4,7 +4,7 @@ using UnityEngine;
 public class ScoreSystemRoot : MonoBehaviour
 {
     private int _score;
-    private int _bestScore;
+    public int BestScore { get; protected set; }
 
     public event Action RecordBroken;
     private const int RECORD_OFFSET = 20;
@@ -15,7 +15,7 @@ public class ScoreSystemRoot : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        _bestScore = StatsRepository.Load()._bestScore;
+        BestScore = StatsRepository.Load()._bestScore;
     }
 
     public int CurrentScore
@@ -38,9 +38,9 @@ public class ScoreSystemRoot : MonoBehaviour
 
     private bool ValidateScore(int score)
     {
-        if (score <= _bestScore) { return false; }
+        if (score <= BestScore) { return false; }
 
-        _bestScore = score;
+        BestScore = score;
         var data = StatsRepository.Load();
         data._bestScore = score;
         StatsRepository.Save(data);
