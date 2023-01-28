@@ -4,6 +4,8 @@ using UnityEngine;
 public class MenuView : MonoBehaviour
 {
     [SerializeField]
+    private GameObject _gameView;
+    [SerializeField]
     private TMP_Text _score;
     [SerializeField]
     private TMP_Text _games;
@@ -15,6 +17,7 @@ public class MenuView : MonoBehaviour
     private void Start()
     {
         gameObject.SetActive(true);
+        _gameView.SetActive(false);
         var data = StatsRepository.Load();
 
         _texts = new string[]
@@ -55,7 +58,7 @@ public class MenuView : MonoBehaviour
 
         GameProgressScaleController.Unpause();
         GetComponent<Animator>().SetBool("Started", true);
-
+        _gameView.SetActive(true);
         enabled = false;
     }
 }

@@ -98,7 +98,7 @@ public class Ball : MonoBehaviour, IPauseHandler
 
         if (cast == false  && _entered)
         {
-            if(Physics.OverlapSphere(transform.position + direction * PathMeshGenerator.BLOCK_HEIGHT * 0.5f, _sphereRadius * 0.5f, _mask).Length == 0)
+            if(Physics.OverlapSphere(transform.position + direction * 0.75f, _sphereRadius * 0.5f, _mask).Length == 0)
             {
                 Died?.Invoke();
                 _died = true;
