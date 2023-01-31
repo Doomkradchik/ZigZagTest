@@ -48,7 +48,6 @@ public class Ball : MonoBehaviour, IPauseHandler
         InputRouter.Touched -= ChangeDirection;
     }
 
-
     private void FixedUpdate()
     {
         _physicsMovement.Move(_direction);

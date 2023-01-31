@@ -14,10 +14,7 @@ public static class StatsRepository
     public static readonly string _path = Application.persistentDataPath + "/stats.json";
     public static void Save(StatsConfig config)
     {
-        if (File.Exists(_path) == false)
-            throw new System.InvalidOperationException();
-
-        FileStream fileStream = new FileStream(_path, FileMode.Open);
+        FileStream fileStream = new FileStream(_path, FileMode.OpenOrCreate);
 
         using (StreamWriter writer = new StreamWriter(fileStream))
         {
@@ -29,7 +26,7 @@ public static class StatsRepository
     public static StatsConfig Load()
     {
         if (File.Exists(_path) == false)
-            throw new System.InvalidOperationException();
+            return new StatsConfig();
         string json;
         using (StreamReader reader = new StreamReader(_path))
         {
