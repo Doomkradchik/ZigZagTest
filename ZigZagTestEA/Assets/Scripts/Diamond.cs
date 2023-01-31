@@ -6,7 +6,7 @@ public class Diamond : MonoBehaviour
     private GameObject _particlePrefab;
     private void Awake()
     {
-        UnityEngine.Object prefab = AssetDatabase.LoadAssetAtPath("Assets/ParticleDimondEffect.prefab", typeof(GameObject));
+        UnityEngine.Object prefab = AssetDatabase.LoadAssetAtPath("Assets/Prefabs/ParticleDimondEffect.prefab", typeof(GameObject));
         _particlePrefab = (GameObject)prefab;
     }
 

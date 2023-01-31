@@ -6,13 +6,10 @@ public class InputRouter : MonoBehaviour
 {
     private PlayerInputs _input;
 
-    public event Action Touched;
-
-    public static InputRouter Instance;
+    public static event Action Touched;
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
-        Instance = this;
+         DontDestroyOnLoad(gameObject);
         _input = new PlayerInputs();
     }
     private void OnEnable()

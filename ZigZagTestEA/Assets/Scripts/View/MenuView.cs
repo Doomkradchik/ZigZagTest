@@ -33,12 +33,12 @@ public class MenuView : MonoBehaviour
 
     private void OnEnable()
     {
-        InputRouter.Instance.Touched += StartGame;
+        InputRouter.Touched += StartGame;
     }
 
     private void OnDisable()
     {
-        InputRouter.Instance.Touched -= StartGame;
+        InputRouter.Touched -= StartGame;
     }
 
     private void UpdateMenuStats(StatsConfig config)

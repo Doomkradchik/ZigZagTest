@@ -25,8 +25,6 @@ public class Ball : MonoBehaviour, IPauseHandler
     private PauseMode _mode;
     private bool _paused = false;
 
-    private int _score;
-
     protected bool _blockDetected = false;
     protected Block _block;
 
@@ -43,11 +41,11 @@ public class Ball : MonoBehaviour, IPauseHandler
 
     private void OnEnable()
     {
-        InputRouter.Instance.Touched += ChangeDirection;
+        InputRouter.Touched += ChangeDirection;
     }
     private void OnDisable()
     {
-        InputRouter.Instance.Touched -= ChangeDirection;
+        InputRouter.Touched -= ChangeDirection;
     }
 
 
