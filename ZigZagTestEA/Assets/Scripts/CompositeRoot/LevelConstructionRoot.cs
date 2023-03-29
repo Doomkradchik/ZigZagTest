@@ -26,7 +26,7 @@ public class LevelConstructionRoot : MonoBehaviour
 
     private void Awake()
     {
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
         _path = FindObjectOfType<PathMeshGenerator>();
         _diamondsPool = new PoolMono<Diamond>(_prefab, _count, _root);
         _diamondsPool.AutoExpand = _expandable;

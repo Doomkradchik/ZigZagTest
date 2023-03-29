@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CameraController : MonoBehaviour, IPauseHandler
+public class CameraController : PauseHandler
 {
     private readonly Vector3 _direction = new Vector3(1f, 0, 1f);
     private PhysicsMovement _movement;
@@ -29,6 +29,11 @@ public class CameraController : MonoBehaviour, IPauseHandler
         p_transform.position = CalculatePosition;
     }
 
+    private void OnDestroy()
+    {
+        GameProgressScaleController.Unsubscribe(this);
+    }
+
     private void Start()
     {
         p_transform.rotation = Quaternion.LookRotation(_direction, Vector3.up);
@@ -38,7 +43,13 @@ public class CameraController : MonoBehaviour, IPauseHandler
         p_transform.position = CalculatePosition;
     }
 
-    public void Pause(PauseMode pauseMode) => enabled = false;
+    protected override void OnPaused(PauseMode mode)
+    {
+        enabled = false;
+    }
 
-    public void Unpause() => enabled = true;
+    protected override void OnUnpause()
+    {
+        enabled = true;
+    }
 }

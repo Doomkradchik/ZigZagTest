@@ -3,7 +3,7 @@ using System;
 using Block = PathMeshGenerator.Block;
 
 [RequireComponent(typeof(Rigidbody), typeof(PhysicsMovement), typeof(SurfaceSlider))]
-public class Ball : MonoBehaviour, IPauseHandler
+public class Ball : PauseHandler
 {
     [SerializeField]
     private LayerMask _mask;
@@ -21,9 +21,6 @@ public class Ball : MonoBehaviour, IPauseHandler
     private bool _entered = false;
     private bool _died = false;
     private float _sphereRadius;
-
-    private PauseMode _mode;
-    private bool _paused = false;
 
     protected bool _blockDetected = false;
     protected Block _block;
@@ -43,14 +40,16 @@ public class Ball : MonoBehaviour, IPauseHandler
     {
         InputRouter.Touched += ChangeDirection;
     }
-    private void OnDisable()
+    private void OnDestroy()
     {
         InputRouter.Touched -= ChangeDirection;
+        GameProgressScaleController.Unsubscribe(this);
     }
 
     private void FixedUpdate()
     {
-        _physicsMovement.Move(_direction);
+        if(_mode == PauseMode.None)
+           _physicsMovement.Move(_direction);
     }
 
     protected virtual void Update()
@@ -59,24 +58,10 @@ public class Ball : MonoBehaviour, IPauseHandler
              DetectPath();
     }
 
-    public void Pause(PauseMode mode )
-    {
-        if(mode == PauseMode.Start)
-        {
-            _mode = mode;
-            enabled = false;
-        }
-
-        _paused = true;
-    }
-
-    public void Unpause()
+    protected override void OnUnpause()
     {
         if (_mode == PauseMode.Start)
             OnInGameProcessStarted();
-
-        _paused = false;
-        enabled = true;
     }
 
     protected virtual void OnInGameProcessStarted()
@@ -86,7 +71,7 @@ public class Ball : MonoBehaviour, IPauseHandler
 
     protected void ChangeDirection()
     {
-        if (_paused) { return; }
+        if (_mode != PauseMode.None) { return; }
 
         _direction = _direction == PathMeshGenerator.left_dir
             ? PathMeshGenerator.right_dir : PathMeshGenerator.left_dir;

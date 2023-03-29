@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameOverView : MonoBehaviour
 {
@@ -37,5 +38,10 @@ public class GameOverView : MonoBehaviour
         _animator.SetBool("Died", true);
         _score.text = ScoreSystemRoot.Instance.CurrentScore.ToString();
         _bestScore.text = ScoreSystemRoot.Instance.BestScore.ToString();
+    }
+
+    public void ReloadLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex, LoadSceneMode.Single);
     }
 }

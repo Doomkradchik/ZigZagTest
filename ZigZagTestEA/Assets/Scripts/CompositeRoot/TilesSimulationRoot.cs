@@ -46,9 +46,6 @@ public sealed class TilesSimulationRoot : Simulation<Entity>
 
     private void Start()
     {
-        if (Instance != null)
-            throw new InvalidOperationException();
-
         Instance = this;
     }
 
